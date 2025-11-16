@@ -14,18 +14,37 @@ import { useAuth } from "react-oidc-context";
       if (auth.error) {
         return <div>Encountering error... {auth.error.message}</div>;
       }
+const callApi = async (endpoint: string) => {
+  try {
+    const token = auth.user?.access_token;
+    const response = await fetch(`http://localhost:8080/api/${endpoint}`, {
+      headers: {
+        // This is the magic line
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+       throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    alert(`Success from /${endpoint}: ${JSON.stringify(data)}`);
+  } catch (err: any) {
+    console.error(`API call to /${endpoint} failed:`, err);
+    alert(`API call to /${endpoint} failed: ${err.message}`);
+  }
+}
 
       if (auth.isAuthenticated) {
         return (
-          <div>
-            <pre> Hello: {auth.user?.profile.email} </pre>
-            <pre> ID Token: {auth.user?.id_token} </pre>
-            <pre> Access Token: {auth.user?.access_token} </pre>
-            <pre> Refresh Token: {auth.user?.refresh_token} </pre>
-
-            {/* Use the built-in signoutRedirect */}
-            <button onClick={() => auth.signoutRedirect()}>Sign out</button>
-          </div>
+    <div>
+    <pre> Hello: {auth.user?.profile.email} </pre>
+    <button onClick={() => auth.signoutRedirect()}>Sign out</button>
+    <hr />
+    <button onClick={() => callApi('public')}>Call Public API</button>
+    <button onClick={() => callApi('me')}>Call Protected API</button>
+  </div>
         );
       }
 
@@ -38,5 +57,8 @@ import { useAuth } from "react-oidc-context";
         </div>
       );
     }
+
+
+    
 
     export default App;
